@@ -3,17 +3,6 @@ library(hal9001)
 library(stringr)
 devtools::load_all()
 
-get_num_nn <- function(X, delta) {
-  k <- nrow(X) - 1
-  num_nn <- apply(X, 2, function(.x) {
-    dist_mat <- get.knn(.x, k = k, algorithm = "kd_tree")$nn.dist
-    dist_mat_num <- dist_mat <= delta
-    rowSums(dist_mat_num)
-  })
-
-  return(num_nn)
-}
-
 # n <- 500
 # d <- 5
 # scenario <- "jump"
@@ -24,7 +13,7 @@ run_sim <- function(n,
                     d,
                     scenario,
                     n_noise,
-                    delta,
+                    deltas,
                     n_test = 10000) {
 
   # simulate data --------------------------------------------------------------
@@ -87,35 +76,49 @@ run_sim <- function(n,
   r_squared_hal <- get_r_square(pred_hal, Y_test)
   eigen_val_hal <- get_smallest_eigen_hal9001(hal_fit, X, FALSE)
 
-  # nearest-neighbor-weighted HAL ----------------------------------------------
-  print("fitting weighted HAL...")
-  weight_tab <- get_num_nn(X, delta)
-  weights <- sapply(basis_list, function(.x) {
-    col_idx <- .x$cols
-    row_idx <- which(apply(X[, col_idx, drop = FALSE], 1, function(.y) {
-      all(.y == .x$cutoffs)
-    }))[1]
-    max(weight_tab[row_idx, col_idx])
-  })
-
-  wt_hal_fit <- fit_hal(X = X,
-                        Y = Y,
-                        penalty_factor = weights,
-                        smoothness_orders = 0,
-                        basis_list = basis_list,
-                        family = "gaussian")
-  pred_wt_hal <- predict(wt_hal_fit, new_data = X_test)
-  r_squared_wt_hal <- get_r_square(pred_wt_hal, Y_test)
-  eigen_val_wt_hal <- get_smallest_eigen_hal9001(wt_hal_fit, X, FALSE)
-
   res <- data.frame(
-    names = c("HAL", "Weighted HAL"),
+    names = "HAL",
     n = n,
     d = d,
     scenario = scenario,
     n_noise = n_noise,
-    r_squared = c(r_squared_hal, r_squared_wt_hal),
-    eigen_val = c(eigen_val_hal, eigen_val_wt_hal))
+    delta = NA,
+    r_squared = r_squared_hal,
+    eigen_val = eigen_val_hal)
+
+  # nearest-neighbor-weighted HAL ----------------------------------------------
+  print("fitting weighted HAL...")
+  for (delta in deltas) {
+    print("delta: " %+% delta)
+    weight_tab <- get_num_nn(X, delta)
+    weights <- sapply(basis_list, function(.x) {
+      col_idx <- .x$cols
+      row_idx <- which(apply(X[, col_idx, drop = FALSE], 1, function(.y) {
+        all(.y == .x$cutoffs)
+      }))[1]
+      max(weight_tab[row_idx, col_idx])
+    })
+
+    wt_hal_fit <- fit_hal(X = X,
+                          Y = Y,
+                          penalty_factor = weights,
+                          smoothness_orders = 0,
+                          basis_list = basis_list,
+                          family = "gaussian")
+    pred_wt_hal <- predict(wt_hal_fit, new_data = X_test)
+    r_squared_wt_hal <- get_r_square(pred_wt_hal, Y_test)
+    eigen_val_wt_hal <- get_smallest_eigen_hal9001(wt_hal_fit, X, FALSE)
+
+    res <- rbind(res, data.frame(
+      names = "Weighted HAL",
+      n = n,
+      d = d,
+      scenario = scenario,
+      n_noise = n_noise,
+      delta = delta,
+      r_squared = r_squared_wt_hal,
+      eigen_val = eigen_val_wt_hal))
+  }
 
   return(res)
 }

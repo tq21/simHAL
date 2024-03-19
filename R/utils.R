@@ -28,3 +28,9 @@ get_smallest_eigen_hal9001 <- function(fit, X, add_main) {
 
   return(M_eigen$values[length(M_eigen$values)])
 }
+
+is_binary <- function(x) {
+  return(all(x %in% c(0, 1)))
+}
+
+`%+%` <- function(a, b) paste0(a, b)
