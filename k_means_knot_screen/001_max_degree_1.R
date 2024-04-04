@@ -1,5 +1,5 @@
-# .libPaths(c("/global/home/users/skyqiu/R/x86_64-pc-linux-gnu-library/4.2",
-#             .libPaths()))
+.libPaths(c("/global/home/users/skyqiu/R/x86_64-pc-linux-gnu-library/4.2",
+            .libPaths()))
 library(ggplot2)
 library(dplyr)
 library(hal9001)
@@ -9,13 +9,14 @@ library(simCadlag)
 load_all()
 
 # SIMULATION PARAMETERS --------------------------------------------------------
-B <- 20
+B <- 200
 n_min <- 300
 n_max <- 3000
 n_test <- 10000
 p_min <- 10
 p_max <- 30
 max_degree <- 1
+num_knots <- 100
 dist_names <- c("normal", "uniform", "binomial")
 results_list <- list()
 
@@ -40,9 +41,9 @@ for (b in 1:B) {
   # fit quantile-screened HAL
   hal_quant_time_0 <- Sys.time()
   basis_list_quant <- enumerate_basis(x = df$X,
-                                      max_degree = 1,
+                                      max_degree = max_degree,
                                       smoothness_orders = 0,
-                                      num_knots = 50,
+                                      num_knots = num_knots,
                                       screen_knots = FALSE)
   hal_quant_fit <- fit_hal(X = df$X,
                            Y = df$Y,
@@ -59,9 +60,9 @@ for (b in 1:B) {
   # fit k-means-screened HAL
   hal_kmeans_time_0 <- Sys.time()
   basis_list_kmeans <- enumerate_basis(x = df$X,
-                                       max_degree = 1,
+                                       max_degree = max_degree,
                                        smoothness_orders = 0,
-                                       num_knots = 50,
+                                       num_knots = num_knots,
                                        screen_knots = TRUE)
   hal_kmeans_fit <- fit_hal(X = df$X,
                             Y = df$Y,
