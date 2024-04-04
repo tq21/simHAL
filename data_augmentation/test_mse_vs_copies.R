@@ -151,7 +151,7 @@ for (i in 1:nrow(plot_grid)) {
   plot(x = tmp_aug$copies, y = tmp_aug$avg_mse, type = "p", pch = 1,
        ylim = c(min(tmp_hal$avg_mse, tmp_aug$avg_mse),
                 max(tmp_hal$avg_mse, tmp_aug$avg_mse)),
-       xlab = "Noise sd", ylab = "Test MSE",
+       xlab = "Copies of augmented data", ylab = "Test MSE",
        main = paste0("d = ", d_cur, ", ", scenario_cur))
   lines(x = tmp_aug$copies, y = tmp_aug$avg_mse, type = "b")
   abline(h = mean(tmp_hal$avg_mse), col = "red", lty = 2)

@@ -34,3 +34,12 @@ is_binary <- function(x) {
 }
 
 `%+%` <- function(a, b) paste0(a, b)
+
+#' Function to get the number of HAL basis functions of each degree
+#' of a given basis list
+get_num_basis <- function(basis_list) {
+  basis_degrees <- map_int(basis_list, function(.x) length(.x$cols))
+  num_basis <- as.numeric(summary(factor(basis_degrees)))
+
+  return(num_basis)
+}
