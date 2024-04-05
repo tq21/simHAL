@@ -1,0 +1,260 @@
+
+R version 4.3.2 (2023-10-31) -- "Eye Holes"
+Copyright (C) 2023 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> .libPaths(c("/global/home/users/skyqiu/R/x86_64-pc-linux-gnu-library/4.2",
++             .libPaths()))
+> library(ggplot2)
+> library(dplyr)
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+> library(hal9001)
+Loading required package: Rcpp
+hal9001 v0.4.6: The Scalable Highly Adaptive Lasso
+note: fit_hal defaults have changed. See ?fit_hal for details
+> library(devtools)
+Loading required package: usethis
+> library(purrr)
+> library(simCadlag)
+> load_all()
+ℹ Loading simHAL
+
+Attaching package: ‘data.table’
+
+The following object is masked from ‘package:purrr’:
+
+    transpose
+
+The following objects are masked from ‘package:dplyr’:
+
+    between, first, last
+
+> 
+> # SIMULATION PARAMETERS --------------------------------------------------------
+> B <- 200
+> n_min <- 300
+> n_max <- 3000
+> n_test <- 10000
+> p_min <- 10
+> p_max <- 30
+> max_degree <- 1
+> num_knots <- 100
+> dist_names <- c("normal", "uniform", "binomial")
+> results_list <- list()
+> 
+> # RUN SIMULATION ---------------------------------------------------------------
+> for (b in 1:B) {
++   # sample simulation parameters
++   n <- sample(n_min:n_max, 1)
++   p <- sample(p_min:p_max, 1)
++ 
++   # generate true function
++   cadlag_fun <- Cadlag$new(n_vars = p, max_degree = max_degree)
++   cadlag_fun$gen_formula()
++   df <- cadlag_fun$gen_samples(n)
++   df_test <- cadlag_fun$gen_samples(n_test)
++   print("Data: " %+% b %+% "; n = " %+% n %+% "; d = " %+% p)
++ 
++   # data characteristics
++   dist_factor <- factor(map_vec(cadlag_fun$rv_list, ~.x$dist_name),
++                         levels = dist_names)
++   dist_counts <- as.numeric(table(dist_factor))
++ 
++   # fit quantile-screened HAL
++   hal_quant_time_0 <- Sys.time()
++   basis_list_quant <- enumerate_basis(x = df$X,
++                                       max_degree = max_degree,
++                                       smoothness_orders = 0,
++                                       num_knots = num_knots,
++                                       screen_knots = FALSE)
++   hal_quant_fit <- fit_hal(X = df$X,
++                            Y = df$Y,
++                            smoothness_orders = 0,
++                            family = "gaussian",
++                            basis_list = basis_list_quant)
++   hal_quant_time_1 <- Sys.time()
++   hal_quant_time <- as.numeric(hal_quant_time_1 - hal_quant_time_0)
++   pred_quant <- predict(hal_quant_fit, new_data = df_test$X)
++   r_squared_quant <- get_r_square(pred_quant, df_test$Y)
++   selected_bases_quant <- length(hal_quant_fit$basis_list[hal_quant_fit$coefs[-1] != 0])
++   tol_bases_quant <- length(hal_quant_fit$basis_list)
++ 
++   # fit k-means-screened HAL
++   hal_kmeans_time_0 <- Sys.time()
++   basis_list_kmeans <- enumerate_basis(x = df$X,
++                                        max_degree = max_degree,
++                                        smoothness_orders = 0,
++                                        num_knots = num_knots,
++                                        screen_knots = TRUE)
++   hal_kmeans_fit <- fit_hal(X = df$X,
++                             Y = df$Y,
++                             smoothness_orders = 0,
++                             family = "gaussian",
++                             basis_list = basis_list_kmeans)
++   hal_kmeans_time_1 <- Sys.time()
++   hal_kmeans_time <- as.numeric(hal_kmeans_time_1 - hal_kmeans_time_0)
++   pred_kmeans <- predict(hal_kmeans_fit, new_data = df_test$X)
++   r_squared_kmeans <- get_r_square(pred_kmeans, df_test$Y)
++   selected_bases_kmeans <- length(hal_kmeans_fit$basis_list[hal_kmeans_fit$coefs[-1] != 0])
++   tol_bases_kmeans <- length(hal_kmeans_fit$basis_list)
++ 
++   # collect results
++   results_list[[b]] <- list(n = n,
++                             p = p,
++                             total_var_norm = cadlag_fun$total_var_norm,
++                             normal = dist_counts[1],
++                             uniform = dist_counts[2],
++                             binomial = dist_counts[3],
++                             r_squared_quant = r_squared_quant,
++                             r_squared_kmeans = r_squared_kmeans,
++                             selected_bases_quant = selected_bases_quant,
++                             selected_bases_kmeans = selected_bases_kmeans,
++                             tol_bases_quant = tol_bases_quant,
++                             tol_bases_kmeans = tol_bases_kmeans,
++                             hal_quant_time = hal_quant_time,
++                             hal_kmeans_time = hal_kmeans_time)
++ }
+[1] "Data: 1; n = 771; d = 25"
+[1] "Data: 2; n = 1988; d = 24"
+[1] "Data: 3; n = 2591; d = 13"
+[1] "Data: 4; n = 874; d = 12"
+[1] "Data: 5; n = 2061; d = 29"
+[1] "Data: 6; n = 2704; d = 28"
+[1] "Data: 7; n = 1120; d = 16"
+[1] "Data: 8; n = 1245; d = 22"
+[1] "Data: 9; n = 1293; d = 21"
+[1] "Data: 10; n = 1656; d = 11"
+[1] "Data: 11; n = 439; d = 26"
+[1] "Data: 12; n = 1257; d = 29"
+[1] "Data: 13; n = 562; d = 11"
+[1] "Data: 14; n = 2472; d = 13"
+[1] "Data: 15; n = 1376; d = 26"
+[1] "Data: 16; n = 2041; d = 14"
+[1] "Data: 17; n = 1573; d = 18"
+[1] "Data: 18; n = 1837; d = 12"
+[1] "Data: 19; n = 1154; d = 16"
+[1] "Data: 20; n = 859; d = 30"
+[1] "Data: 21; n = 2135; d = 12"
+[1] "Data: 22; n = 1041; d = 13"
+[1] "Data: 23; n = 370; d = 16"
+[1] "Data: 24; n = 2721; d = 18"
+[1] "Data: 25; n = 859; d = 19"
+[1] "Data: 26; n = 2288; d = 19"
+[1] "Data: 27; n = 492; d = 30"
+[1] "Data: 28; n = 1898; d = 20"
+[1] "Data: 29; n = 1734; d = 23"
+[1] "Data: 30; n = 1819; d = 17"
+[1] "Data: 31; n = 2438; d = 18"
+[1] "Data: 32; n = 1337; d = 12"
+[1] "Data: 33; n = 1588; d = 23"
+[1] "Data: 34; n = 327; d = 19"
+[1] "Data: 35; n = 662; d = 25"
+[1] "Data: 36; n = 1831; d = 22"
+[1] "Data: 37; n = 2816; d = 25"
+[1] "Data: 38; n = 2134; d = 12"
+[1] "Data: 39; n = 2589; d = 22"
+[1] "Data: 40; n = 2211; d = 18"
+[1] "Data: 41; n = 2247; d = 26"
+[1] "Data: 42; n = 2666; d = 28"
+[1] "Data: 43; n = 502; d = 20"
+[1] "Data: 44; n = 580; d = 29"
+[1] "Data: 45; n = 2228; d = 18"
+[1] "Data: 46; n = 1153; d = 26"
+[1] "Data: 47; n = 2336; d = 15"
+[1] "Data: 48; n = 686; d = 24"
+[1] "Data: 49; n = 2838; d = 11"
+[1] "Data: 50; n = 1826; d = 25"
+[1] "Data: 51; n = 936; d = 23"
+[1] "Data: 52; n = 2304; d = 15"
+[1] "Data: 53; n = 2473; d = 27"
+[1] "Data: 54; n = 2103; d = 25"
+[1] "Data: 55; n = 461; d = 16"
+[1] "Data: 56; n = 400; d = 20"
+[1] "Data: 57; n = 396; d = 13"
+[1] "Data: 58; n = 1741; d = 10"
+[1] "Data: 59; n = 1832; d = 29"
+[1] "Data: 60; n = 1855; d = 11"
+[1] "Data: 61; n = 2286; d = 25"
+[1] "Data: 62; n = 1004; d = 10"
+[1] "Data: 63; n = 2752; d = 13"
+[1] "Data: 64; n = 659; d = 28"
+[1] "Data: 65; n = 849; d = 10"
+[1] "Data: 66; n = 1710; d = 25"
+[1] "Data: 67; n = 2703; d = 21"
+[1] "Data: 68; n = 1074; d = 23"
+[1] "Data: 69; n = 1057; d = 23"
+[1] "Data: 70; n = 522; d = 15"
+[1] "Data: 71; n = 429; d = 21"
+[1] "Data: 72; n = 2021; d = 22"
+[1] "Data: 73; n = 1292; d = 19"
+[1] "Data: 74; n = 589; d = 29"
+[1] "Data: 75; n = 2913; d = 28"
+[1] "Data: 76; n = 1216; d = 10"
+[1] "Data: 77; n = 1451; d = 10"
+[1] "Data: 78; n = 1332; d = 27"
+[1] "Data: 79; n = 2569; d = 15"
+[1] "Data: 80; n = 956; d = 28"
+[1] "Data: 81; n = 2888; d = 20"
+[1] "Data: 82; n = 2495; d = 30"
+[1] "Data: 83; n = 2573; d = 14"
+[1] "Data: 84; n = 944; d = 23"
+[1] "Data: 85; n = 327; d = 17"
+[1] "Data: 86; n = 2951; d = 13"
+[1] "Data: 87; n = 318; d = 12"
+[1] "Data: 88; n = 1166; d = 21"
+[1] "Data: 89; n = 770; d = 16"
+[1] "Data: 90; n = 2248; d = 18"
+[1] "Data: 91; n = 660; d = 12"
+[1] "Data: 92; n = 1621; d = 13"
+[1] "Data: 93; n = 1223; d = 14"
+[1] "Data: 94; n = 2184; d = 13"
+[1] "Data: 95; n = 2240; d = 15"
+[1] "Data: 96; n = 2268; d = 14"
+[1] "Data: 97; n = 1035; d = 26"
+[1] "Data: 98; n = 2594; d = 11"
+[1] "Data: 99; n = 2114; d = 30"
+[1] "Data: 100; n = 2568; d = 13"
+[1] "Data: 101; n = 1135; d = 20"
+[1] "Data: 102; n = 1259; d = 23"
+[1] "Data: 103; n = 1075; d = 24"
+[1] "Data: 104; n = 448; d = 14"
+[1] "Data: 105; n = 2623; d = 18"
+[1] "Data: 106; n = 610; d = 20"
+[1] "Data: 107; n = 1112; d = 25"
+[1] "Data: 108; n = 2914; d = 19"
+[1] "Data: 109; n = 1618; d = 15"
+[1] "Data: 110; n = 712; d = 13"
+[1] "Data: 111; n = 1129; d = 24"
+[1] "Data: 112; n = 2430; d = 20"
+[1] "Data: 113; n = 642; d = 30"
+[1] "Data: 114; n = 316; d = 10"
+[1] "Data: 115; n = 2592; d = 26"
+[1] "Data: 116; n = 910; d = 15"
+[1] "Data: 117; n = 1359; d = 10"
+[1] "Data: 118; n = 1594; d = 22"
+[1] "Data: 119; n = 403; d = 13"
+[1] "Data: 120; n = 1637; d = 25"
+[1] "Data: 121; n = 1874; d = 13"
+[1] "Data: 122; n = 2307; d = 19"
