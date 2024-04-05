@@ -17,7 +17,7 @@ get_smallest_eigen_hal9001 <- function(fit, X, add_main) {
 
   # whether to add main terms to final design matrix
   end_idx <- ifelse(add_main, length(basis_list) - ncol(X), length(basis_list))
-  M <- as.matrix(hal9001::make_design_matrix(as.matrix(X), basis_list[1:end_idx]))
+  M <- as.matrix(hal9001:::make_design_matrix(as.matrix(X), basis_list[1:end_idx]))
 
   if (add_main) {
     M <- cbind(X, M)
