@@ -1,5 +1,5 @@
-.libPaths(c("/global/home/users/skyqiu/R/x86_64-pc-linux-gnu-library/4.2",
-            .libPaths()))
+# .libPaths(c("/global/home/users/skyqiu/R/x86_64-pc-linux-gnu-library/4.2",
+#             .libPaths()))
 library(hal9001)
 library(devtools)
 library(dplyr)
@@ -92,4 +92,4 @@ for (j in 1:n_runs) {
 }
 
 results <- do.call(rbind, lapply(results_list, data.frame, stringsAsFactors = FALSE))
-saveRDS(results, "out/004_skewed_benchmark.rds")
+#saveRDS(results, "out/004_skewed_benchmark.rds")

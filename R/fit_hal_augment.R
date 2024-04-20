@@ -33,7 +33,7 @@ fit_hal_augment <- function(X,
   # make CV folds for selecting optimal sd
   folds <- make_folds(n = n, V = V_folds)
 
-  res <- map_dfr(folds, function(.x) {
+  res <- future_map_dfr(folds, function(.x) {
     # train-validation split
     X_train <- X[.x$training_set, , drop = FALSE]
     Y_train <- Y[.x$training_set]
@@ -70,12 +70,12 @@ fit_hal_augment <- function(X,
       loss_sd <- get_loss(pred_valid, Y_valid, family)
 
       return(loss_sd)
-    })
+    }, .progress = TRUE)
 
     names(loss_sd_seq) <- sd_seq
 
     return(loss_sd_seq)
-  })
+  }, .progress = TRUE, .options = furrr_options(seed = TRUE))
 
   opt_sd <- sd_seq[which.min(colMeans(res))] # optimal sd
 
@@ -101,6 +101,7 @@ fit_hal_augment <- function(X,
 
     return(list(X = X_aug,
                 Y = Y_all,
+                cv_selected_sd = opt_sd,
                 fit = fit))
 
   } else {

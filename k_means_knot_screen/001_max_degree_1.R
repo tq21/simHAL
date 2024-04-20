@@ -9,7 +9,7 @@ library(simCadlag)
 load_all()
 
 # SIMULATION PARAMETERS --------------------------------------------------------
-B <- 200
+B <- 1
 n_min <- 300
 n_max <- 3000
 n_test <- 10000
@@ -94,4 +94,4 @@ for (b in 1:B) {
 }
 
 results <- do.call(rbind, lapply(results_list, data.frame, stringsAsFactors = FALSE))
-saveRDS(results, "out/001_max_degree_1.rds")
+#saveRDS(results, "out/001_max_degree_1.rds")
