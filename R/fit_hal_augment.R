@@ -70,12 +70,13 @@ fit_hal_augment <- function(X,
       loss_sd <- get_loss(pred_valid, Y_valid, family)
 
       return(loss_sd)
-    }, .progress = TRUE)
+    }, .progress = FALSE)
 
     names(loss_sd_seq) <- sd_seq
 
     return(loss_sd_seq)
-  }, .progress = TRUE, .options = furrr_options(seed = TRUE))
+  }, .options = furrr_options(seed = TRUE))
+  #}, .progress = TRUE, .options = furrr_options(seed = TRUE))
 
   opt_sd <- sd_seq[which.min(colMeans(res))] # optimal sd
 
