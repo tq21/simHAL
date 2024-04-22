@@ -10,10 +10,10 @@ load_all()
 source("sim_data.R")
 
 # simulation parameters --------------------------------------------------------
-date <- "0420"
+date <- "0422"
 B <- 500
 n <- 300
-data_id <- 1
+data_id <- 2
 results <- data.frame(B = NULL,
                       est = NULL,
                       est_lower = NULL,
@@ -56,7 +56,7 @@ for (b in seq(B)) {
                                   Y = Y,
                                   basis_list = Q_basis_list,
                                   col_idx = c(1, 2),
-                                  sd_seq = c(0.05, 0.1, 0.15, 0.2),
+                                  sd_seq = c(0, 0.01),#c(0.05, 0.1, 0.15, 0.2),
                                   copies = 5,
                                   family = "gaussian",
                                   copies_max = NULL)
@@ -79,4 +79,4 @@ for (b in seq(B)) {
   )
 }
 
-saveRDS(results, "out/run_data_" %+% data_id %+% "_" %+% date %+% ".rds")
+saveRDS(results, "out/rerun_data_" %+% data_id %+% "_" %+% date %+% ".rds")

@@ -4,15 +4,13 @@ library(hal9001)
 library(tmle)
 library(devtools)
 library(origami)
-library(furrr)
+library(parallel)
 library(purrr)
 load_all()
 source("sim_data.R")
 
-plan(multisession, workers = 5)
-
 # simulation parameters --------------------------------------------------------
-date <- "0419"
+date <- "0420"
 B <- 500
 n <- 300
 data_id <- 3
@@ -54,15 +52,14 @@ for (b in seq(B)) {
                    family = "gaussian")
 
   # augmented HAL procedure ----------------------------------------------------
-  Q_aug_fit <- fit_hal_augment(X = data.frame(W, A = A),
-                               Y = Y,
-                               col_idx = c(1, 2),
-                               sd_seq = c(0.05, 0.1, 0.15, 0.2),
-                               copies = 5,
-                               family = "gaussian",
-                               copies_max = NULL,
-                               basis_list = Q_basis_list,
-                               smoothness_orders = 0)
+  Q_aug_fit <- cv_fit_hal_augment(X = data.frame(W, A = A),
+                                  Y = Y,
+                                  basis_list = Q_basis_list,
+                                  col_idx = c(1, 2),
+                                  sd_seq = c(0.05, 0.1, 0.15, 0.2),
+                                  copies = 5,
+                                  family = "gaussian",
+                                  copies_max = NULL)
   Q1_aug_est <- predict(Q_aug_fit$fit, new_data = data_A1)
   Q0_aug_est <- predict(Q_aug_fit$fit, new_data = data_A0)
   Q_aug_est <- data.frame(Q0 = Q0_aug_est, Q1 = Q1_aug_est)
