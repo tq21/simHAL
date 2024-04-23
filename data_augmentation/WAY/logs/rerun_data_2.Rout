@@ -1,0 +1,640 @@
+
+R version 4.3.2 (2023-10-31) -- "Eye Holes"
+Copyright (C) 2023 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> .libPaths(c("/global/home/users/skyqiu/R/x86_64-pc-linux-gnu-library/4.2",
++             .libPaths()))
+> library(hal9001)
+Loading required package: Rcpp
+hal9001 v0.4.6: The Scalable Highly Adaptive Lasso
+note: fit_hal defaults have changed. See ?fit_hal for details
+> library(tmle)
+Loading required package: glmnet
+Loading required package: Matrix
+Loaded glmnet 4.1-6
+Loading required package: SuperLearner
+Loading required package: nnls
+Loading required package: gam
+Loading required package: splines
+Loading required package: foreach
+Loaded gam 1.22-1
+
+Super Learner
+Version: 2.0-28
+Package created on 2021-05-04
+
+Welcome to the tmle package, version 1.5.0-1.1
+
+Major changes since v1.3.x. Use tmleNews() to see details on changes and bug fixes
+> library(devtools)
+Loading required package: usethis
+> library(origami)
+origami v1.0.7: Generalized Framework for Cross-Validation
+> library(parallel)
+> library(purrr)
+
+Attaching package: ‘purrr’
+
+The following objects are masked from ‘package:foreach’:
+
+    accumulate, when
+
+> load_all()
+ℹ Loading simHAL
+
+Attaching package: ‘data.table’
+
+The following object is masked from ‘package:purrr’:
+
+    transpose
+
+> source("sim_data.R")
+> 
+> # simulation parameters --------------------------------------------------------
+> date <- "0422"
+> B <- 500
+> n <- 300
+> data_id <- 2
+> results <- data.frame(B = NULL,
++                       est = NULL,
++                       est_lower = NULL,
++                       est_upper = NULL,
++                       est_aug = NULL,
++                       est_lower_aug = NULL,
++                       est_upper_aug = NULL)
+> 
+> for (b in seq(B)) {
++   print("run: " %+% b)
++ 
++   # simulate data
++   data <- sim_data(n = n, data_id = data_id)
++   data_A1 <- data; data_A1$A <- 1
++   data_A0 <- data; data_A0$A <- 0
++   Y <- data$Y; A <- data$A; W <- data[, c("W1", "W2", "W3")]
++ 
++   # HAL basis list
++   Q_basis_list <- enumerate_basis(x = data.frame(W, A = A),
++                                   max_degree = 3,
++                                   smoothness_orders = 0)
++ 
++   # regular HAL procedure ------------------------------------------------------
++   g_fit <- glm(A ~ W1 + W2 + W3, family = "binomial", data = data)
++   g_est <- as.numeric(predict(g_fit, newdata = data, type = "response"))
++   Q_fit <- fit_hal(X = data.frame(W, A = A),
++                    Y = Y,
++                    basis_list = Q_basis_list,
++                    smoothness_orders = 0,
++                    family = "gaussian")
++   Q1_est <- predict(Q_fit, new_data = data_A1)
++   Q0_est <- predict(Q_fit, new_data = data_A0)
++   Q_est <- data.frame(Q0 = Q0_est, Q1 = Q1_est)
++   tmle_res <- tmle(Y = Y, A = A, W = W,
++                    g1W = g_est, Q = Q_est,
++                    family = "gaussian")
++ 
++   # augmented HAL procedure ----------------------------------------------------
++   Q_aug_fit <- cv_fit_hal_augment(X = data.frame(W, A = A),
++                                   Y = Y,
++                                   basis_list = Q_basis_list,
++                                   col_idx = c(1, 2),
++                                   sd_seq = c(0, 0.01),#c(0.05, 0.1, 0.15, 0.2),
++                                   copies = 5,
++                                   family = "gaussian",
++                                   copies_max = NULL)
++   Q1_aug_est <- predict(Q_aug_fit$fit, new_data = data_A1)
++   Q0_aug_est <- predict(Q_aug_fit$fit, new_data = data_A0)
++   Q_aug_est <- data.frame(Q0 = Q0_aug_est, Q1 = Q1_aug_est)
++   tmle_aug_res <- tmle(Y = Y, A = A, W = W,
++                        g1W = g_est, Q = Q_aug_est,
++                        family = "gaussian")
++ 
++   # collect results
++   results <- rbind(results,
++                    data.frame(B = b,
++                               est = tmle_res$estimates$ATE$psi,
++                               est_lower = tmle_res$estimates$ATE$CI[1],
++                               est_upper = tmle_res$estimates$ATE$CI[2],
++                               est_aug = tmle_aug_res$estimates$ATE$psi,
++                               est_aug_lower = tmle_aug_res$estimates$ATE$CI[1],
++                               est_aug_upper = tmle_aug_res$estimates$ATE$CI[2])
++   )
++ }
+[1] "run: 1"
+[1] "run: 2"
+[1] "run: 3"
+[1] "run: 4"
+[1] "run: 5"
+[1] "run: 6"
+[1] "run: 7"
+[1] "run: 8"
+[1] "run: 9"
+[1] "run: 10"
+[1] "run: 11"
+[1] "run: 12"
+[1] "run: 13"
+[1] "run: 14"
+[1] "run: 15"
+[1] "run: 16"
+[1] "run: 17"
+[1] "run: 18"
+[1] "run: 19"
+[1] "run: 20"
+[1] "run: 21"
+[1] "run: 22"
+[1] "run: 23"
+[1] "run: 24"
+[1] "run: 25"
+[1] "run: 26"
+[1] "run: 27"
+[1] "run: 28"
+[1] "run: 29"
+[1] "run: 30"
+[1] "run: 31"
+[1] "run: 32"
+[1] "run: 33"
+[1] "run: 34"
+[1] "run: 35"
+[1] "run: 36"
+[1] "run: 37"
+[1] "run: 38"
+[1] "run: 39"
+[1] "run: 40"
+[1] "run: 41"
+[1] "run: 42"
+[1] "run: 43"
+[1] "run: 44"
+[1] "run: 45"
+[1] "run: 46"
+[1] "run: 47"
+[1] "run: 48"
+[1] "run: 49"
+[1] "run: 50"
+[1] "run: 51"
+[1] "run: 52"
+[1] "run: 53"
+[1] "run: 54"
+[1] "run: 55"
+[1] "run: 56"
+[1] "run: 57"
+[1] "run: 58"
+[1] "run: 59"
+[1] "run: 60"
+[1] "run: 61"
+[1] "run: 62"
+[1] "run: 63"
+[1] "run: 64"
+[1] "run: 65"
+[1] "run: 66"
+[1] "run: 67"
+[1] "run: 68"
+[1] "run: 69"
+[1] "run: 70"
+[1] "run: 71"
+[1] "run: 72"
+[1] "run: 73"
+[1] "run: 74"
+[1] "run: 75"
+[1] "run: 76"
+[1] "run: 77"
+[1] "run: 78"
+[1] "run: 79"
+[1] "run: 80"
+[1] "run: 81"
+[1] "run: 82"
+[1] "run: 83"
+[1] "run: 84"
+[1] "run: 85"
+[1] "run: 86"
+[1] "run: 87"
+[1] "run: 88"
+[1] "run: 89"
+[1] "run: 90"
+[1] "run: 91"
+[1] "run: 92"
+[1] "run: 93"
+[1] "run: 94"
+[1] "run: 95"
+[1] "run: 96"
+[1] "run: 97"
+[1] "run: 98"
+[1] "run: 99"
+[1] "run: 100"
+[1] "run: 101"
+[1] "run: 102"
+[1] "run: 103"
+[1] "run: 104"
+[1] "run: 105"
+[1] "run: 106"
+[1] "run: 107"
+[1] "run: 108"
+[1] "run: 109"
+[1] "run: 110"
+[1] "run: 111"
+[1] "run: 112"
+[1] "run: 113"
+[1] "run: 114"
+[1] "run: 115"
+[1] "run: 116"
+[1] "run: 117"
+[1] "run: 118"
+[1] "run: 119"
+[1] "run: 120"
+[1] "run: 121"
+[1] "run: 122"
+[1] "run: 123"
+[1] "run: 124"
+[1] "run: 125"
+[1] "run: 126"
+[1] "run: 127"
+[1] "run: 128"
+[1] "run: 129"
+[1] "run: 130"
+[1] "run: 131"
+[1] "run: 132"
+[1] "run: 133"
+[1] "run: 134"
+[1] "run: 135"
+[1] "run: 136"
+[1] "run: 137"
+[1] "run: 138"
+[1] "run: 139"
+[1] "run: 140"
+[1] "run: 141"
+[1] "run: 142"
+[1] "run: 143"
+[1] "run: 144"
+[1] "run: 145"
+[1] "run: 146"
+[1] "run: 147"
+[1] "run: 148"
+[1] "run: 149"
+[1] "run: 150"
+[1] "run: 151"
+[1] "run: 152"
+[1] "run: 153"
+[1] "run: 154"
+[1] "run: 155"
+[1] "run: 156"
+[1] "run: 157"
+[1] "run: 158"
+[1] "run: 159"
+[1] "run: 160"
+[1] "run: 161"
+[1] "run: 162"
+[1] "run: 163"
+[1] "run: 164"
+[1] "run: 165"
+[1] "run: 166"
+[1] "run: 167"
+[1] "run: 168"
+[1] "run: 169"
+[1] "run: 170"
+[1] "run: 171"
+[1] "run: 172"
+[1] "run: 173"
+[1] "run: 174"
+[1] "run: 175"
+[1] "run: 176"
+[1] "run: 177"
+[1] "run: 178"
+[1] "run: 179"
+[1] "run: 180"
+[1] "run: 181"
+[1] "run: 182"
+[1] "run: 183"
+[1] "run: 184"
+[1] "run: 185"
+[1] "run: 186"
+[1] "run: 187"
+[1] "run: 188"
+[1] "run: 189"
+[1] "run: 190"
+[1] "run: 191"
+[1] "run: 192"
+[1] "run: 193"
+[1] "run: 194"
+[1] "run: 195"
+[1] "run: 196"
+[1] "run: 197"
+[1] "run: 198"
+[1] "run: 199"
+[1] "run: 200"
+[1] "run: 201"
+[1] "run: 202"
+[1] "run: 203"
+[1] "run: 204"
+[1] "run: 205"
+[1] "run: 206"
+[1] "run: 207"
+[1] "run: 208"
+[1] "run: 209"
+[1] "run: 210"
+[1] "run: 211"
+[1] "run: 212"
+[1] "run: 213"
+[1] "run: 214"
+[1] "run: 215"
+[1] "run: 216"
+[1] "run: 217"
+[1] "run: 218"
+[1] "run: 219"
+[1] "run: 220"
+[1] "run: 221"
+[1] "run: 222"
+[1] "run: 223"
+[1] "run: 224"
+[1] "run: 225"
+[1] "run: 226"
+[1] "run: 227"
+[1] "run: 228"
+[1] "run: 229"
+[1] "run: 230"
+[1] "run: 231"
+[1] "run: 232"
+[1] "run: 233"
+[1] "run: 234"
+[1] "run: 235"
+[1] "run: 236"
+[1] "run: 237"
+[1] "run: 238"
+[1] "run: 239"
+[1] "run: 240"
+[1] "run: 241"
+[1] "run: 242"
+[1] "run: 243"
+[1] "run: 244"
+[1] "run: 245"
+[1] "run: 246"
+[1] "run: 247"
+[1] "run: 248"
+[1] "run: 249"
+[1] "run: 250"
+[1] "run: 251"
+[1] "run: 252"
+[1] "run: 253"
+[1] "run: 254"
+[1] "run: 255"
+[1] "run: 256"
+[1] "run: 257"
+[1] "run: 258"
+[1] "run: 259"
+[1] "run: 260"
+[1] "run: 261"
+[1] "run: 262"
+[1] "run: 263"
+[1] "run: 264"
+[1] "run: 265"
+[1] "run: 266"
+[1] "run: 267"
+[1] "run: 268"
+[1] "run: 269"
+[1] "run: 270"
+[1] "run: 271"
+[1] "run: 272"
+[1] "run: 273"
+[1] "run: 274"
+[1] "run: 275"
+[1] "run: 276"
+[1] "run: 277"
+[1] "run: 278"
+[1] "run: 279"
+[1] "run: 280"
+[1] "run: 281"
+[1] "run: 282"
+[1] "run: 283"
+[1] "run: 284"
+[1] "run: 285"
+[1] "run: 286"
+[1] "run: 287"
+[1] "run: 288"
+[1] "run: 289"
+[1] "run: 290"
+[1] "run: 291"
+[1] "run: 292"
+[1] "run: 293"
+[1] "run: 294"
+[1] "run: 295"
+[1] "run: 296"
+[1] "run: 297"
+[1] "run: 298"
+[1] "run: 299"
+[1] "run: 300"
+[1] "run: 301"
+[1] "run: 302"
+[1] "run: 303"
+[1] "run: 304"
+[1] "run: 305"
+[1] "run: 306"
+[1] "run: 307"
+[1] "run: 308"
+[1] "run: 309"
+[1] "run: 310"
+[1] "run: 311"
+[1] "run: 312"
+[1] "run: 313"
+[1] "run: 314"
+[1] "run: 315"
+[1] "run: 316"
+[1] "run: 317"
+[1] "run: 318"
+[1] "run: 319"
+[1] "run: 320"
+[1] "run: 321"
+[1] "run: 322"
+[1] "run: 323"
+[1] "run: 324"
+[1] "run: 325"
+[1] "run: 326"
+[1] "run: 327"
+[1] "run: 328"
+[1] "run: 329"
+[1] "run: 330"
+[1] "run: 331"
+[1] "run: 332"
+[1] "run: 333"
+[1] "run: 334"
+[1] "run: 335"
+[1] "run: 336"
+[1] "run: 337"
+[1] "run: 338"
+[1] "run: 339"
+[1] "run: 340"
+[1] "run: 341"
+[1] "run: 342"
+[1] "run: 343"
+[1] "run: 344"
+[1] "run: 345"
+[1] "run: 346"
+[1] "run: 347"
+[1] "run: 348"
+[1] "run: 349"
+[1] "run: 350"
+[1] "run: 351"
+[1] "run: 352"
+[1] "run: 353"
+[1] "run: 354"
+[1] "run: 355"
+[1] "run: 356"
+[1] "run: 357"
+[1] "run: 358"
+[1] "run: 359"
+[1] "run: 360"
+[1] "run: 361"
+[1] "run: 362"
+[1] "run: 363"
+[1] "run: 364"
+[1] "run: 365"
+[1] "run: 366"
+[1] "run: 367"
+[1] "run: 368"
+[1] "run: 369"
+[1] "run: 370"
+[1] "run: 371"
+[1] "run: 372"
+[1] "run: 373"
+[1] "run: 374"
+[1] "run: 375"
+[1] "run: 376"
+[1] "run: 377"
+[1] "run: 378"
+[1] "run: 379"
+[1] "run: 380"
+[1] "run: 381"
+[1] "run: 382"
+[1] "run: 383"
+[1] "run: 384"
+[1] "run: 385"
+[1] "run: 386"
+[1] "run: 387"
+[1] "run: 388"
+[1] "run: 389"
+[1] "run: 390"
+[1] "run: 391"
+[1] "run: 392"
+[1] "run: 393"
+[1] "run: 394"
+[1] "run: 395"
+[1] "run: 396"
+[1] "run: 397"
+[1] "run: 398"
+[1] "run: 399"
+[1] "run: 400"
+[1] "run: 401"
+[1] "run: 402"
+[1] "run: 403"
+[1] "run: 404"
+[1] "run: 405"
+[1] "run: 406"
+[1] "run: 407"
+[1] "run: 408"
+[1] "run: 409"
+[1] "run: 410"
+[1] "run: 411"
+[1] "run: 412"
+[1] "run: 413"
+[1] "run: 414"
+[1] "run: 415"
+[1] "run: 416"
+[1] "run: 417"
+[1] "run: 418"
+[1] "run: 419"
+[1] "run: 420"
+[1] "run: 421"
+[1] "run: 422"
+[1] "run: 423"
+[1] "run: 424"
+[1] "run: 425"
+[1] "run: 426"
+[1] "run: 427"
+[1] "run: 428"
+[1] "run: 429"
+[1] "run: 430"
+[1] "run: 431"
+[1] "run: 432"
+[1] "run: 433"
+[1] "run: 434"
+[1] "run: 435"
+[1] "run: 436"
+[1] "run: 437"
+[1] "run: 438"
+[1] "run: 439"
+[1] "run: 440"
+[1] "run: 441"
+[1] "run: 442"
+[1] "run: 443"
+[1] "run: 444"
+[1] "run: 445"
+[1] "run: 446"
+[1] "run: 447"
+[1] "run: 448"
+[1] "run: 449"
+[1] "run: 450"
+[1] "run: 451"
+[1] "run: 452"
+[1] "run: 453"
+[1] "run: 454"
+[1] "run: 455"
+[1] "run: 456"
+[1] "run: 457"
+[1] "run: 458"
+[1] "run: 459"
+[1] "run: 460"
+[1] "run: 461"
+[1] "run: 462"
+[1] "run: 463"
+[1] "run: 464"
+[1] "run: 465"
+[1] "run: 466"
+[1] "run: 467"
+[1] "run: 468"
+[1] "run: 469"
+[1] "run: 470"
+[1] "run: 471"
+[1] "run: 472"
+[1] "run: 473"
+[1] "run: 474"
+[1] "run: 475"
+[1] "run: 476"
+[1] "run: 477"
+[1] "run: 478"
+[1] "run: 479"
+[1] "run: 480"
+[1] "run: 481"
+[1] "run: 482"
+[1] "run: 483"
+[1] "run: 484"
+[1] "run: 485"
+[1] "run: 486"
+[1] "run: 487"
+[1] "run: 488"
+[1] "run: 489"
+[1] "run: 490"
+[1] "run: 491"
+[1] "run: 492"
+[1] "run: 493"
+[1] "run: 494"
+[1] "run: 495"
+[1] "run: 496"
+[1] "run: 497"
+[1] "run: 498"
+[1] "run: 499"
+[1] "run: 500"
+> 
+> saveRDS(results, "out/rerun_data_" %+% data_id %+% "_" %+% date %+% ".rds")
+> 
+> proc.time()
+     user    system   elapsed 
+91005.014  1025.282 28652.836 
