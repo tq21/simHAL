@@ -17,7 +17,7 @@ tab_skewed_benchmark <- res_skewed_benchmark %>%
             mean_tol_bases_kmeans = mean(tol_bases_kmeans),
             .by = c("d", "scenario"))
 
-xtable(tab_benchmark)
-xtable(tab_skewed_benchmark)
+xtable(tab_benchmark, digits = 3)
+xtable(tab_skewed_benchmark, digits = 3)
 
 
