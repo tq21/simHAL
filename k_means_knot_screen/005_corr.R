@@ -10,13 +10,13 @@ source("sim_data_corr.R")
 
 # simulation parameters --------------------------------------------------------
 set.seed(123)
-n_runs <- 50
+n_runs <- 1
 n <- 2000
 d_vals <- c(3, 3, 3, 5, 5, 5)
 scenarios <- rep(c("smooth", "jump", "sin"), 2)
 corr_vals <- seq(0.4, 0.9, 0.1)
 max_degree <- 3
-num_knots_quant <- c(50, 15, 5)
+num_knots_quant <- c(40, 15, 5)
 num_knots_kmeans <- 50
 results_list <- list()
 
@@ -96,4 +96,4 @@ for (j in 1:n_runs) {
 }
 
 results <- do.call(rbind, lapply(results_list, data.frame, stringsAsFactors = FALSE))
-saveRDS(results, "out/005_corr.rds")
+#saveRDS(results, "out/005_corr.rds")

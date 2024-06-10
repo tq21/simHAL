@@ -43,3 +43,6 @@ get_num_basis <- function(basis_list) {
 
   return(num_basis)
 }
+
+# function to filter rows based on the indicator
+
