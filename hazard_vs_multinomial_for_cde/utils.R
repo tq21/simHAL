@@ -19,13 +19,14 @@ cde_hazard <- function(data, W, A) {
   rep_data_train <- rep_data_train[a <= A]
 
   # fit hazard regression using HAL
-  fit <- fit_hal(X = rep_data_train[, ..W],
+  cov_names <- c(W, "a")
+  fit <- fit_hal(X = rep_data_train[, ..cov_names],
                  Y = rep_data_train[, A_a],
                  id = rep_data_train[, id],
                  smoothness_orders = 1,
                  max_degree = 3,
                  family = "binomial",
-                 return_x_basis = TRUE)
+                 return_x_basis = FALSE)
 
   return(fit)
 }
@@ -48,9 +49,10 @@ predict_cde_hazard <- function(fit, new_data, W, A) {
   rep_data_pred[, `:=` (id = rep(seq(n), each = tau),
                         a = rep(seq(tau), n))]
   rep_data_pred[, A_a := as.numeric(A == a)]
+  cov_names <- c(W, "a")
 
   # predict hazard
-  pred <- predict(fit, new_data = rep_data_pred, type = "response")
+  pred <- predict(fit, new_data = rep_data_pred[, ..cov_names], type = "response")
 
   # convert hazard to density
   rep_data_pred[, lambda := pred]

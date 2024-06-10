@@ -8,11 +8,11 @@ library(ggplot2)
 library(ggpubr)
 load_all()
 set.seed(123)
-source("002_sim_data_non_constant_hazard.R")
+source("003_sim_data_two_levels.R")
 source("utils.R")
 
 # load results
-res_500 <- readRDS("out/002_run_sim_n_500.rds")
+res_500 <- readRDS("out/003_run_sim_n_500.rds")
 res_1000 <- readRDS("out/001_run_sim_n_1000.rds")
 res_1500 <- readRDS("out/001_run_sim_n_1500.rds")
 res_2000 <- readRDS("out/001_run_sim_n_2000.rds")
