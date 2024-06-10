@@ -25,7 +25,7 @@
 module load r
 
 R CMD BATCH --no-save 001_run_sim_n_500.R logs/001_run_sim_n_500.Rout &
-R CMD BATCH --no-save 002_run_sim_n_1000.R logs/002_run_sim_n_1000.Rout &
-R CMD BATCH --no-save 003_run_sim_n_1500.R logs/003_run_sim_n_1500.Rout &
-R CMD BATCH --no-save 004_run_sim_n_2000.R logs/004_run_sim_n_2000.Rout &
+R CMD BATCH --no-save 001_run_sim_n_1000.R logs/001_run_sim_n_1000.Rout &
+R CMD BATCH --no-save 001_run_sim_n_1500.R logs/001_run_sim_n_1500.Rout &
+R CMD BATCH --no-save 001_run_sim_n_2000.R logs/001_run_sim_n_2000.Rout &
 wait
