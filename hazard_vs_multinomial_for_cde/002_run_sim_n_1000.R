@@ -7,12 +7,12 @@ library(nnet)
 library(devtools)
 load_all()
 set.seed(123)
-source("001_sim_data_constant_hazard.R")
+source("002_sim_data_non_constant_hazard.R")
 source("utils.R")
 
 # SIMULATION PARAMETERS --------------------------------------------------------
 B <- 50
-n <- 500
+n <- 1000
 W <- c("W1", "W2")
 A <- "A"
 results_list <- list()
@@ -20,7 +20,7 @@ results_list <- list()
 for (b in 1:B) {
   print("run " %+% b)
 
-  # simulate data
+  # generate data
   data <- sim_data(n)
 
   # multinomial logistic regression
@@ -42,4 +42,4 @@ for (b in 1:B) {
                             hal_multinom_fit = hal_multinom_fit)
 }
 
-saveRDS(results_list, "out/001_run_sim_n_500.rds")
+saveRDS(results_list, "out/002_run_sim_n_1000.rds")

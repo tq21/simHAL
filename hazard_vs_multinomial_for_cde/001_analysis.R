@@ -8,11 +8,11 @@ library(ggplot2)
 library(ggpubr)
 load_all()
 set.seed(123)
-source("sim_data_non_constant_hazard.R")
+source("sim_data_constant_hazard.R")
 source("utils.R")
 
 # load results
-res_500 <- readRDS("out/002_run_sim_n_500.rds")
+res_500 <- readRDS("out/001_run_sim_n_500.rds")
 res_1000 <- readRDS("out/001_run_sim_n_1000.rds")
 res_1500 <- readRDS("out/001_run_sim_n_1500.rds")
 res_2000 <- readRDS("out/001_run_sim_n_2000.rds")
@@ -104,3 +104,5 @@ plt_glm_multi_loglik <- ggplot(df, aes(x = n)) +
 
 plt <- ggarrange(plt_hal_multi_loglik, plt_hal_haz_reg_loglik, plt_glm_multi_loglik,
                  nrow = 1, ncol = 3, common.legend = TRUE)
+ggsave(filename = "hazard_vs_multinomial.pdf", plot = plt, device = "pdf",
+       path = "figs", width = 16, height = 6, dpi = 300)

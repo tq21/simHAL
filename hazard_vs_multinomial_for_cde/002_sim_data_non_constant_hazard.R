@@ -7,8 +7,14 @@ sim_data <- function(n) {
   lambda_fun <- function(a, W1, W2) {
     if (a == 5) {
       return(1)
-    } else if (a %in% 1:4) {
-      return(plogis(-8+0.3*W1^2+0.25*W2))
+    } else if (a == 1) {
+      return(plogis(-3.1+0.3*W1))
+    } else if (a == 2) {
+      return(plogis(-1.2+0.1*W1))
+    } else if (a == 3) {
+      return(plogis(-5-W1+1.2*W2))
+    } else if (a == 4) {
+      return(plogis(-8+2.1*W1+2.2*W2))
     }
   }
   lambda_fun <- Vectorize(lambda_fun)

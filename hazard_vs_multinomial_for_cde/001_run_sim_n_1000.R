@@ -7,19 +7,21 @@ library(nnet)
 library(devtools)
 load_all()
 set.seed(123)
-source("sim_data.R")
+source("001_sim_data_constant_hazard.R")
 source("utils.R")
 
 # SIMULATION PARAMETERS --------------------------------------------------------
 B <- 50
 n <- 1000
-data <- sim_data(n)
 W <- c("W1", "W2")
 A <- "A"
 results_list <- list()
 
 for (b in 1:B) {
   print("run " %+% b)
+
+  # simulate data
+  data <- sim_data(n)
 
   # multinomial logistic regression
   glm_multinom_fit <- multinom(A ~ ., data = data)

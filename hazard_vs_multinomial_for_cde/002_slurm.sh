@@ -1,6 +1,6 @@
 #!/bin/bash
 # Job name:
-#SBATCH --job-name=001_hazard_vs_multinomial
+#SBATCH --job-name=002_hazard_vs_multinomial
 #
 # Partition:
 #SBATCH --partition=savio3
@@ -24,8 +24,8 @@
 
 module load r
 
-R CMD BATCH --no-save 001_run_sim_n_500.R logs/001_run_sim_n_500.Rout &
-R CMD BATCH --no-save 001_run_sim_n_1000.R logs/001_run_sim_n_1000.Rout &
-R CMD BATCH --no-save 001_run_sim_n_1500.R logs/001_run_sim_n_1500.Rout &
-R CMD BATCH --no-save 001_run_sim_n_2000.R logs/001_run_sim_n_2000.Rout &
+R CMD BATCH --no-save 002_run_sim_n_500.R logs/002_run_sim_n_500.Rout &
+R CMD BATCH --no-save 002_run_sim_n_1000.R logs/002_run_sim_n_1000.Rout &
+R CMD BATCH --no-save 002_run_sim_n_1500.R logs/002_run_sim_n_1500.Rout &
+R CMD BATCH --no-save 002_run_sim_n_2000.R logs/002_run_sim_n_2000.Rout &
 wait
