@@ -17,6 +17,7 @@ cde_hazard <- function(data, W, A) {
   rep_data_pred[, A_a := as.numeric(A == a)]
   rep_data_train <- copy(rep_data_pred)
   rep_data_train <- rep_data_train[a <= A]
+  rep_data_train <- rep_data_train[a < tau]
 
   # fit hazard regression using HAL
   cov_names <- c(W, "a")
@@ -38,17 +39,15 @@ cde_hazard <- function(data, W, A) {
 #' interest
 #' @param W A vector of the covariate names
 #' @param A The name of the variable of interest
-predict_cde_hazard <- function(fit, new_data, W, A) {
+predict_cde_hazard <- function(fit, new_data, W, tau) {
 
   n <- new_data[, .N]
-  tau <- uniqueN(new_data[, ..A])
 
   # prepare repeated measure data
   rep_data_pred <- copy(new_data)
   rep_data_pred <- rep_data_pred[rep(1:.N, each = tau)]
   rep_data_pred[, `:=` (id = rep(seq(n), each = tau),
                         a = rep(seq(tau), n))]
-  rep_data_pred[, A_a := as.numeric(A == a)]
   cov_names <- c(W, "a")
 
   # predict hazard
@@ -62,7 +61,7 @@ predict_cde_hazard <- function(fit, new_data, W, A) {
   pred <- reshape(rep_data_pred[, .(id, a, density)],
                   idvar = "id", timevar = "a", direction = "wide")
   pred <- as.data.frame(pred[, id := NULL])
-  names(pred) <- sort(unique(new_data[[A]]))
+  names(pred) <- seq(tau)
 
   return(pred)
 }

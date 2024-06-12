@@ -8,7 +8,7 @@ library(ggplot2)
 library(ggpubr)
 load_all()
 set.seed(123)
-source("sim_data_constant_hazard.R")
+source("001_sim_data_constant_hazard.R")
 source("utils.R")
 
 # load results
@@ -17,7 +17,7 @@ res_1000 <- readRDS("out/001_run_sim_n_1000.rds")
 res_1500 <- readRDS("out/001_run_sim_n_1500.rds")
 res_2000 <- readRDS("out/001_run_sim_n_2000.rds")
 
-B <- 5
+B <- 50
 n_test <- 10000
 W <- c("W1", "W2")
 A <- "A"
@@ -76,33 +76,17 @@ df_2000 <- df_2000 %>% summarize(glm_multinom_loglik = mean(glm_multinom_loglik)
 df <- bind_rows(df_500, df_1000, df_1500, df_2000)
 df$n <- c(500, 1000, 1500, 2000)
 
-# plot
-plt_hal_multi_loglik <- ggplot(df, aes(x = n)) +
-  geom_line(aes(y = hal_multinom_loglik), color = "red", linewidth = 1.5) +
-  labs(title = "HAL (multinomial)",
+# plot all log likelihoods on one single plot, add legend
+plt <- ggplot(df, aes(x = n)) +
+  geom_line(aes(y = hal_multinom_loglik, color = "HAL (multinomial)"), linewidth = 1.5) +
+  geom_line(aes(y = hal_haz_reg_loglik, color = "HAL (hazard-based)"), linewidth = 1.5) +
+  labs(title = "Scenario 1",
        y = "Log-likelihood",
-       x = "Sample size") +
+       x = "Sample size",
+       color = "Method") +
   theme_minimal() +
   theme(text = element_text(size = 16),
-        plot.title = element_text(hjust = 0.5))
-plt_hal_haz_reg_loglik <- ggplot(df, aes(x = n)) +
-  geom_line(aes(y = hal_haz_reg_loglik), color = "blue", linewidth = 1.5) +
-  labs(title = "HAL (hazard-based)",
-       y = "Log-likelihood",
-       x = "Sample size") +
-  theme_minimal() +
-  theme(text = element_text(size = 16),
-        plot.title = element_text(hjust = 0.5))
-plt_glm_multi_loglik <- ggplot(df, aes(x = n)) +
-  geom_line(aes(y = glm_multinom_loglik), color = "purple", linewidth = 1.5) +
-  labs(title = "Misspecified GLM (multinomial)",
-       y = "Log-likelihood",
-       x = "Sample size") +
-  theme_minimal() +
-  theme(text = element_text(size = 16),
-        plot.title = element_text(hjust = 0.5))
+        plot.title = element_text(hjust = 0.5),
+        legend.position = "none")
 
-plt <- ggarrange(plt_hal_multi_loglik, plt_hal_haz_reg_loglik, plt_glm_multi_loglik,
-                 nrow = 1, ncol = 3, common.legend = TRUE)
-ggsave(filename = "hazard_vs_multinomial.pdf", plot = plt, device = "pdf",
-       path = "figs", width = 16, height = 6, dpi = 300)
+saveRDS(plt, "figs/plt_scenario_1.rds")

@@ -32,3 +32,25 @@ sim_data <- function(n) {
   return(dt)
 }
 
+get_truth <- function(data) {
+  rep_data <- copy(data)
+  n <- rep_data[, .N]
+  tau <- 5
+
+  # prepare repeated measure data
+  rep_data <- rep_data[rep(1:.N, each = tau)]
+  rep_data[, `:=` (id = rep(seq(n), each = tau),
+                        a = rep(seq(tau), n))]
+
+  # convert hazard to density
+  rep_data[a == 5, lambda := 1]
+  rep_data[a != 5, lambda := plogis(-8+0.3*W1^2+0.25*W2)]
+  rep_data[, surv := cumprod(1 - lambda), by = id]
+  rep_data[, density := lambda * shift(surv, fill = 1), by = id]
+  pred <- reshape(rep_data[, .(id, a, density)],
+                  idvar = "id", timevar = "a", direction = "wide")
+  pred <- as.data.frame(pred[, id := NULL])
+  names(pred) <- seq(tau)
+
+  return(pred)
+}

@@ -10,7 +10,7 @@ sim_data <- function(n) {
     } else if (a == 1) {
       return(plogis(-3.1+0.3*W1))
     } else if (a == 2) {
-      return(plogis(-1.2+0.1*W1))
+      return(plogis(-3+0.1*W1^2))
     } else if (a == 3) {
       return(plogis(-5-W1+1.2*W2))
     } else if (a == 4) {
@@ -36,4 +36,30 @@ sim_data <- function(n) {
   dt <- dt[a == 1, .(W1, W2, A)]
 
   return(dt)
+}
+
+get_truth <- function(data) {
+  rep_data <- copy(data)
+  n <- rep_data[, .N]
+  tau <- 5
+
+  # prepare repeated measure data
+  rep_data <- rep_data[rep(1:.N, each = tau)]
+  rep_data[, `:=` (id = rep(seq(n), each = tau),
+                   a = rep(seq(tau), n))]
+
+  # convert hazard to density
+  rep_data[a == 1, lambda := plogis(-3.1+0.3*W1)]
+  rep_data[a == 2, lambda := plogis(-3+0.1*W1^2)]
+  rep_data[a == 3, lambda := plogis(-5-W1+1.2*W2)]
+  rep_data[a == 4, lambda := plogis(-8+2.1*W1+2.2*W2)]
+  rep_data[a == 5, lambda := 1]
+  rep_data[, surv := cumprod(1 - lambda), by = id]
+  rep_data[, density := lambda * shift(surv, fill = 1), by = id]
+  pred <- reshape(rep_data[, .(id, a, density)],
+                  idvar = "id", timevar = "a", direction = "wide")
+  pred <- as.data.frame(pred[, id := NULL])
+  names(pred) <- seq(tau)
+
+  return(pred)
 }
