@@ -11,7 +11,7 @@ source("002_sim_data_non_constant_hazard.R")
 source("utils.R")
 
 # SIMULATION PARAMETERS --------------------------------------------------------
-B <- 5
+B <- 50
 n <- 2000
 W <- c("W1", "W2")
 A <- "A"
