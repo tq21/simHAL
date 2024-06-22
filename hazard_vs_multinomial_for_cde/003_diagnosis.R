@@ -1,4 +1,6 @@
 library(plotly)
+library(data.table)
+library(hal9001)
 source("utils.R")
 set.seed(9823475)
 n <- 500
@@ -65,7 +67,7 @@ get_plot <- function(scenario, k) {
       data = as.data.frame(data_plot), x = ~W1, y = ~W2, z = ~true_density[, k],
       type = 'scatter3d', mode = 'markers',
       marker = list(size = 3, color = 'green', opacity = 0.5),
-      name = 'HAL (multinomial)'
+      name = 'Truth'
     ) %>%
     layout(
       title = paste("3D Plot for Category", k),
@@ -79,4 +81,4 @@ get_plot <- function(scenario, k) {
   return(plt)
 }
 
-get_plot(scenario = 2, k = 1)
+get_plot(scenario = 2, k = 3)

@@ -17,7 +17,7 @@ res_1000 <- readRDS("out/001_run_sim_n_1000.rds")
 res_1500 <- readRDS("out/001_run_sim_n_1500.rds")
 res_2000 <- readRDS("out/001_run_sim_n_2000.rds")
 
-B <- 50
+B <- 1
 n_test <- 10000
 W <- c("W1", "W2")
 A <- "A"
@@ -40,11 +40,22 @@ get_results <- function(res, data_test_all, sample_size) {
     glm_multinom_loglik <- loglik(glm_multinom_pred, .y$A)
 
     # hal hazard regression
-    hal_haz_reg_pred <- predict_cde_hazard(fit = .x$hal_haz_reg_fit, new_data = .y, W = W, A = A)
+    hal_haz_reg_pred <- predict_cde_hazard(fit = .x$hal_haz_reg_fit, new_data = .y, W = W, tau = 5)
     hal_haz_reg_loglik <- loglik(hal_haz_reg_pred, .y$A)
 
     # hal multinomial
-    hal_multinom_pred <- predict(.x$hal_multinom_fit, new_data = .y[, ..W], type = "response")
+    tmp_data <- .y[rep(1:nrow(.y), each = 5),]
+    tmp_data[, id := rep(seq(n_test), each = 5)]
+    tmp_data$A <- rep(1:5, nrow(.y))
+
+    suppressMessages({hal_multinom_pred <- map_dfc(1:5, function(.k) {
+      tmp_data <- copy(.y)
+      tmp_data$A <- .k
+      hal_multinom_pred <- predict(.x$hal_multinom_fit, new_data = tmp_data[, c(..W, ..A)], type = "response")
+      hal_multinom_pred <- hal_multinom_pred[, .k]
+
+      return(data.frame(hal_multinom_pred))
+    })})
     hal_multinom_loglik <- loglik(hal_multinom_pred, .y$A)
 
     return(data.frame(n = sample_size,
@@ -86,7 +97,7 @@ plt <- ggplot(df, aes(x = n)) +
        color = "Method") +
   theme_minimal() +
   theme(text = element_text(size = 16),
-        plot.title = element_text(hjust = 0.5),
-        legend.position = "none")
+        plot.title = element_text(hjust = 0.5))#,
+        #legend.position = "none")
 
 saveRDS(plt, "figs/plt_scenario_1.rds")

@@ -17,7 +17,7 @@ res_1000 <- readRDS("out/002_run_sim_n_1000.rds")
 res_1500 <- readRDS("out/002_run_sim_n_1500.rds")
 res_2000 <- readRDS("out/002_run_sim_n_2000.rds")
 
-B <- 50
+B <- 1
 n_test <- 10000
 W <- c("W1", "W2")
 A <- "A"
@@ -40,11 +40,11 @@ get_results <- function(res, data_test_all, sample_size) {
     glm_multinom_loglik <- loglik(glm_multinom_pred, .y$A)
 
     # hal hazard regression
-    hal_haz_reg_pred <- predict_cde_hazard(fit = .x$hal_haz_reg_fit, new_data = .y, W = W, A = A)
+    hal_haz_reg_pred <- predict_cde_hazard(fit = .x$hal_haz_reg_fit, new_data = .y, W = W, tau = 5)
     hal_haz_reg_loglik <- loglik(hal_haz_reg_pred, .y$A)
 
     # hal multinomial
-    hal_multinom_pred <- predict(.x$hal_multinom_fit, new_data = .y[, ..W], type = "response")
+    hal_multinom_pred <- predict(.x$hal_multinom_fit, new_data = .y[, c(..W, ..A)], type = "response")
     hal_multinom_loglik <- loglik(hal_multinom_pred, .y$A)
 
     return(data.frame(n = sample_size,

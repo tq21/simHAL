@@ -30,7 +30,7 @@ for (b in 1:B) {
   hal_haz_reg_fit <- cde_hazard(data = data, W = W, A = A)
 
   # HAL multinomial regression method
-  hal_multinom_fit <- fit_hal(X = data[, ..W],
+  hal_multinom_fit <- fit_hal(X = data[, c(..W, ..A)],
                               Y = data[[A]],
                               max_degree = 3,
                               smoothness_orders = 1,
