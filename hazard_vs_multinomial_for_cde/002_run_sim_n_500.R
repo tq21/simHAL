@@ -11,7 +11,7 @@ source("002_sim_data_non_constant_hazard.R")
 source("utils.R")
 
 # SIMULATION PARAMETERS --------------------------------------------------------
-B <- 1
+B <- 50
 n <- 500
 W <- c("W1", "W2")
 A <- "A"
@@ -30,16 +30,24 @@ for (b in 1:B) {
   hal_haz_reg_fit <- cde_hazard(data = data, W = W, A = A)
 
   # HAL multinomial regression method
-  hal_multinom_fit <- fit_hal(X = data[, c(..W, ..A)],
+  hal_multinom_fit <- fit_hal(X = data[, ..W],
                               Y = data[[A]],
                               max_degree = 3,
                               smoothness_orders = 1,
                               family = "multinomial")
 
+  # HAL multinomial regression method (with A as a covariate too)
+  hal_multinom_aug_fit <- fit_hal(X = data[, c(..W, ..A)],
+                                  Y = data[[A]],
+                                  max_degree = 3,
+                                  smoothness_orders = 1,
+                                  family = "multinomial")
+
   # collect results
   results_list[[b]] <- list(glm_multinom_fit = glm_multinom_fit,
                             hal_haz_reg_fit = hal_haz_reg_fit,
-                            hal_multinom_fit = hal_multinom_fit)
+                            hal_multinom_fit = hal_multinom_fit,
+                            hal_multinom_aug_fit = hal_multinom_aug_fit)
 }
 
 saveRDS(results_list, "out/002_run_sim_n_500.rds")

@@ -53,6 +53,3 @@ fit <- fit_adaptive_multi_hal(data = data,
                               X = "X",
                               Y = "Y",
                               init_K = 5)
-
-
-

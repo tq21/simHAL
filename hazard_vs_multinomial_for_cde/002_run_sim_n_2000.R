@@ -36,10 +36,18 @@ for (b in 1:B) {
                               smoothness_orders = 1,
                               family = "multinomial")
 
+  # HAL multinomial regression method (with A as a covariate too)
+  hal_multinom_aug_fit <- fit_hal(X = data[, c(..W, ..A)],
+                                  Y = data[[A]],
+                                  max_degree = 3,
+                                  smoothness_orders = 1,
+                                  family = "multinomial")
+
   # collect results
   results_list[[b]] <- list(glm_multinom_fit = glm_multinom_fit,
                             hal_haz_reg_fit = hal_haz_reg_fit,
-                            hal_multinom_fit = hal_multinom_fit)
+                            hal_multinom_fit = hal_multinom_fit,
+                            hal_multinom_aug_fit = hal_multinom_aug_fit)
 }
 
 saveRDS(results_list, "out/002_run_sim_n_2000.rds")
